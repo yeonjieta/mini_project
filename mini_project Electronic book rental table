@@ -1,0 +1,262 @@
+drop sequence members_seq;
+drop sequence books_seq;
+drop sequence review_seq;
+drop sequence board_seq;
+drop sequence reply_seq;
+drop sequence rent_seq;
+
+drop table members cascade constraints;
+drop table books cascade constraints;
+drop table review cascade constraints;
+drop table board cascade constraints;
+drop table reply cascade constraints;
+drop table rent cascade constraints;
+
+create sequence members_seq
+    start with 1
+    maxvalue 99999
+    increment by 1
+    nocache
+    nocycle;
+
+create sequence books_seq
+    start with 1
+    maxvalue 99999
+    increment by 1
+    nocache
+    nocycle;
+    
+create sequence review_seq
+    start with 1
+    maxvalue 99999
+    increment by 1
+    nocache
+    nocycle;
+
+create sequence board_seq
+    start with 1
+    maxvalue 99999
+    increment by 1
+    nocache
+    nocycle;
+
+create sequence reply_seq
+    start with 1
+    maxvalue 99999
+    increment by 1
+    nocache
+    nocycle;
+
+create sequence rent_seq 
+    start with 1
+    maxvalue 99999
+    increment by 1
+    nocache
+    nocycle;
+
+create table members (
+    idx     number      default members_seq.nextval primary key,
+    userid  varchar2(100)   unique,
+    userpw  varchar2(100)   not null,
+    useremail varchar2(100) not null,
+    username varchar2(100) not null,
+    grade    varchar2(100)  default 'user',      -- 관리자, user 구분용
+    joindate   date         default sysdate
+);
+
+create table books (
+    idx         number   default   books_seq.nextval primary key,
+    reader     number,                         -- 외래키 members table (idx)
+    booktitle    varchar2(100)   not null,
+    bookwriter      varchar2(100)   not null,       -- 책 저자
+    bookphoto   varchar2(255),                  -- 책 이미지
+    plot        varchar2(2000) not null,        -- 책 줄거리
+    rental_status      number          default 1 check(rental_status in (1,0)), -- 대출용 상태 확인
+    content     varchar2(2000)  not null,       -- 책 내용 (미구현 가능성 있음)
+    
+    constraint books_members_fk
+    foreign key(reader)
+    references members(idx)
+    on delete cascade
+);
+
+create table review (
+    idx     number      default review_seq.nextval primary key,
+    books number,                             -- 외래키 book table(idx)
+    writer number,                             -- 외래키 member table(idx)
+    content varchar2(2000) not null,            -- 글 내용
+    bookphoto varchar2(255) ,                    
+    writeDate   date    default sysdate,
+    ipaddr    varchar2(50)  not null,
+
+    
+    constraint review_books_fk
+    foreign key(books)
+    references books(idx)
+    on delete cascade,
+    
+    constraint review_members_fk
+    foreign key(writer)
+    references members(idx)
+    on delete cascade
+);
+
+create table board(
+    idx             number      default board_seq.nextval primary key,
+    title           varchar(100)        not null,
+    writer          number              not null,
+    content         varchar(2000)       not null,
+    fileName        varchar(255),
+    writeDate       date                default sysdate,
+    ipaddr          varchar(50)         not null,
+    
+    constraint board_members_fk
+    foreign key(writer)
+    references members(idx)
+    on delete cascade
+);
+    
+
+create table reply(
+    idx         number      default reply_seq.nextval primary key,
+    board       number          not null,
+    writer      number          not null,
+    content     varchar2(1500)  not null,
+    writeDate   date            default sysdate,
+    ipaddr      varchar2(50)    not null,
+    
+    constraint reply_members_fk
+    foreign key(writer)
+    references members(idx)
+    on delete cascade,
+    
+    constraint reply_board_fk
+    foreign key(board)
+    references board(idx)
+    on delete cascade
+);
+
+create table rent (
+    idx     number      default rent_seq.nextval primary key,
+    books number,     -- 외래키 book table(idx)
+    reader number,     -- 외래키 memeer table(idx)
+    
+    constraint rent_books_fk
+    foreign key(books)
+    references books(idx)
+    on delete cascade,
+    
+    constraint rent_members_fk
+    foreign key(reader)
+    references members(idx)
+    on delete cascade
+);
+insert into members (userid, userpw, useremail, username, grade) values
+('semin','semin','semin@naver.com','안세민','admin');
+insert into members (userid, userpw, useremail, username, grade) values
+('yeonji','yeonji','yeonji@naver.com','이연지','admin');
+insert into members (userid, userpw, useremail, username) values
+('jongrae','jongrae','jongrae@naver.com','원종래');
+
+select * from members;
+
+insert into books (reader, booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+(1,'book1','semin','book1.jpg','abcdefg',1,'ㄱㄴㄷㄹㅁㅂ');
+insert into books (reader, booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+(2,'book2','yeonji','book2.jpg','hijkl',1,'ㅅㅇㅈㅊ');
+insert into books (reader, booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+(3,'book3','jongrae','book3.jpg','mnopqrs',0,'ㅋㅌㅍㅎ');
+
+select * from books;
+
+insert into review (books, writer, content, bookphoto, ipaddr) values
+(1, 1,'test','book1.jpg','0.0.0.0');
+insert into review (books, writer, content, bookphoto, ipaddr) values
+(1, 2,'test','book2.jpg','0.0.0.0');
+
+select * from review;
+
+insert into board (title, writer, content, fileName, ipaddr) values
+('title1', 1,'test','book1','0.0.0.0');
+insert into board (title, writer, content, fileName, ipaddr) values
+('title2', 2,'test','book','0.0.0.0');
+
+select * from board;
+
+insert into reply (board, writer, content, ipaddr) values
+(1, 1,'book1','0.0.0.0');
+insert into reply (board, writer, content, ipaddr) values
+(1, 2,'test','0.0.0.0');
+
+select * from reply;
+
+insert into rent(books, reader) values
+(1, 1);
+
+insert into rent(books, reader) values
+(2, 2);
+
+insert into rent(books, reader) values
+(3, 3);
+
+select * from rent;
+
+-- join문 test
+select
+B.reader, B.idx, B.booktitle, B.bookwriter, B.bookphoto, B.rental_status, 
+M.userid, M.useremail, M.username, M.grade
+
+from rent R
+inner join books B
+    on R.books = B.idx
+
+inner join members M
+    on R.reader = M.idx;
+    
+    
+-- 1 : 대여 중(books table 더미데이터)
+
+insert into books (booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+('THIRD THINKING','가게야마 테쓰야','THIRD THINKING.png','써드 씽킹을 알고 난 후 나는 불가능했던 모든 일을 해낼 수 있었다! 지금의 나를 넘어 즉각적이고 강력한 변화를 이끄는 써드 씽킹의 힘! 인샌은 하나하나의 의사결정으로 
+이루어진다. 그렇다면 우리는 매일 어떤 의사결정을 하고 있을까? 노벨경제학...', 1 ,'-');
+
+insert into books (booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+('나에게만 보이는 풍경 제주','신미식','나에게만 보이는 풍경 제주.png','마음에 제주를 품고 사는 당신이 보고 싶었던, 그 풍경들 다큐멘터리 사진작가 신미식의 
+서른일곱 번 째 책 10여 년간 카메라에 담아온 제주의 풍경, 이름 모를 숲과 오래된 창고,
+낯선 길에서 만난 위로와 감동, 다시 기운을 내 길을 걷게 된 순간들의 기록...',1,'-');
+
+insert into books (booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+('당신은 어떤 가면을 쓰고 있나요','양스위엔', '당신은 어떤 가면을 쓰고 있나요.png','인간은 사회적 동물이다. 다른 사람들과 관계를 맺으면서 배우고 성장한다. 무서운 속도로
+발전하는 컴퓨터 통신 기술 덕분에 인간은 이제 시간과 공간의 제약을 넘어 교류할 수 있게
+됐다. 이런 이유로 세상은 외향적인 사람일수록 인간관계의 폭을 넓히고 많은 기회를 누릴
+수 있게 변하고 있다.
+',0,'-');
+
+insert into books (booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+('메리골드 마음 세탁소','윤정은','메리골드 마음 세탁소.png','우리는 가끔 시간을 되돌려 가거로 돌아가 후회했던 일을 되돌리고 싶어한다. 그런데 과연 
+그 일을 지워버리는 게 현명한 선택일까? 그리고 그 기억을 지웠을 때 지금의 내가 있을 수 있을까? 만약 그 기억만 없다면 앞으로 행복할 수 있을까? 메리골드 마음 세탁소는 한밤 중 언덕 위에 생겨난, 조금 수상하고도 신비로운 세탁소에서 벌어지는 일들을 그린 힐링 판타지 소설이다.',1,'-');
+
+insert into books (booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+('모든 삶은 흐른다','로랑스 드빌레르','모든 삶은 흐른다.png','그 어느 때보다 본질에 집중해야 할 필요를 느끼는 요즘 우리에게 무한함과 삶의 모습을 있는 그대로 보여주는 자연이 있다. 잔잔하면서도 거칠고, 당장 와 닿을 것 같으면서도 금세 멀어지는, 고요하되 강한 존재감을 드러내는 바다가 바로 그것이다.
+',1,'-');
+
+insert into books (booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+('스타벅스 오피셜 북','다카라지마사','스타벅스 오피셜 북.png','일본 스타벅스 매장 설립에 얽힌 다양한 스토리! 지역과 연계한 설립부터 관계중심의 경영!
+스타벅스만이 줄 수 있는 편안함을 마신다 전 세계 수많은 대형 프랜차이즈를 압도한 부동의 글로벌 커피 챔피언 스타벅스. 1996년 일본에 문을 열기 시작...',0,'-');
+
+insert into books (booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+('역행자','자청','역행자.png','"절대로 읽지 마라! 죽을 때 까지 순리자로 살고 싶다면!" 95퍼센트의 인간은 타고난 유전자와 본성의 꼭두각시로 살아간다. 이들은 평생 돈, 시간, 운명에게 속박되어, 평범함을 벗어나지 못하고 불행하게 사는 순리자다. 그러나 5퍼센트의 인가은 다르다. 이들은 타고난 유전자의 본성을 역행해 돈, 시간, 운명으로부터 완전한 자유를 얻는다. 본성을 거슬러 행복을 쟁취하는 이들이 바로 역행자다.',0,'-');
+
+insert into books (booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+('옷의 사계','박추원','옷의 사계.png','세상에 옷은 참 많은데 내 마음에 쏙 드는 옷은 찾기는 힘들다. 때문에 직접 옷을 만들어 보고 싶다는 생각, 누구나 한번쯤은 해보았을 것이다. 하지만 가위아 바늘만 있다고 만들수 있는 것은 아니다. 디자인 패턴도 있어야 하고, 각각에 어울리는 바느질 기술도 익혀야 한다.',0,'-');
+
+insert into books (booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+('챗GPT, 질문이 돈이 되는 세상','전상훈 / 최서연','챗GPT, 질문이 돈이 되는 세상.png', '앞당겨진 특이점, 세상은 과연 어떻게 변하고, 인간은 어떤 방식으로 살아갈 것인가?
+인공지능 시대를 살아야 할 우리는 무엇을 준비해야 하는가? 챗 GPT의 놀라운 능력에 전 세계가 충격을 받았다. 인공지능의 발달로 인간의 일자리, 특히 지식 노동자의 일자리까지 상당수 라질 것이라는 경고와 오히려 생산력을 폭발시켜 풍요로운 유토피아가 열릴 것이라는 낙관이 맞붙으며 열띤 논쟁을 불러 일으키고 있다.', 1, '-');
+
+insert into books (booktitle, bookwriter, bookphoto, plot, rental_status, content) values
+('흔들리는 나를 위한 1일 1철학','오세진','흔들리는 나를 위한 1일 1철학.png', '오늘도 흔들리는 발걸음으로 세상의 비바람을 헤쳐 나가는 당신을 위한 책! 이 책은 수천 년 전의 시대를 살았던 사람들이 인간과 세상에 대해 고뇌하고 성찰하는 모습을 보여주는 거대한 이야기책과도 같다. 독자는 동양철학의 진수를 담은 문헌...', 1, '-');
+
+
+
+
